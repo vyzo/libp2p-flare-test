@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	pb "github.com/vyzo/libp2p-flare-test/pb"
@@ -12,6 +13,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 
+	circuit "github.com/libp2p/go-libp2p-circuit/v2/client"
 	"github.com/libp2p/go-msgio/protoio"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -59,6 +61,9 @@ type Client struct {
 	host   host.Host
 	cfg    *Config
 	domain string
+	nick   string
+	server *peer.AddrInfo
+	relay  *peer.AddrInfo
 }
 
 type ClientInfo struct {
@@ -66,11 +71,38 @@ type ClientInfo struct {
 	Info peer.AddrInfo
 }
 
-func NewClient(h host.Host, cfg *Config, domain string) *Client {
+func NewClient(h host.Host, cfg *Config, domain, nick string) *Client {
+	var relay, server *peer.AddrInfo
+	var err error
+	if domain == "TCP" {
+		relay, err = parseAddrInfo(cfg.RelayAddrTCP)
+		if err != nil {
+			panic(err)
+		}
+
+		server, err = parseAddrInfo(cfg.ServerAddrTCP)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		relay, err = parseAddrInfo(cfg.RelayAddrUDP)
+		if err != nil {
+			panic(err)
+		}
+
+		server, err = parseAddrInfo(cfg.ServerAddrUDP)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return &Client{
 		host:   h,
 		cfg:    cfg,
 		domain: domain,
+		nick:   nick,
+		relay:  relay,
+		server: server,
 	}
 }
 
@@ -198,19 +230,103 @@ func (c *Client) connectToBootstrappers() error {
 }
 
 func (c *Client) Background() {
+	c.connectToRelay()
 
+	time.Sleep(time.Minute)
+	for {
+		log.Infof("trying to connect to peers...")
+
+		peers, err := c.ListPeers()
+		if err != nil {
+			log.Warnf("error getting peers: %s", err)
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		log.Infof("got %d peers", len(peers))
+		for _, ci := range peers {
+			err = c.Connect(ci)
+			if err != nil {
+				log.Infof("error connecting to %s [%s]: %s", ci.Info.ID, ci.Nick, err)
+			} else {
+				log.Infof("successfully connected to %s [%s]", ci.Info.ID, ci.Nick)
+			}
+		}
+
+		sleep := 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
+		log.Infof("waiting for %s...", sleep)
+		time.Sleep(sleep)
+	}
+}
+
+func (c *Client) connectToRelay() {
+	// connect to relay and reserve slot
+	var rsvp *circuit.Reservation
+	var err error
+	for rsvp == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		err = c.host.Connect(ctx, *c.relay)
+		cancel()
+
+		if err != nil {
+			log.Warnf("error connecting to relay: %s; will retry in 1min", err)
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+		rsvp, err = circuit.Reserve(ctx, c.host, *c.relay)
+		cancel()
+
+		if err != nil {
+			log.Warnf("error reserving slot in relay: %s; will retry in 1min", err)
+			time.Sleep(time.Minute)
+			continue
+		}
+	}
+
+	// announce our slot to the server
+	for {
+		s, err := c.connectToServer()
+		if err != nil {
+			log.Warnf("error connecting to server: %s; will retry in 1min", err)
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		// announce presence
+		var msg pb.FlareMessage
+		wr := protoio.NewDelimitedWriter(s)
+
+		msg.Type = pb.FlareMessage_ANNOUNCE.Enum()
+		msg.Announce = &pb.Announce{
+			Domain:   &c.domain,
+			PeerInfo: makePeerInfo(c.nick, peer.AddrInfo{ID: c.host.ID(), Addrs: rsvp.Addrs}),
+		}
+
+		if err := wr.WriteMsg(&msg); err != nil {
+			log.Warnf("error announcing presence to server: %s; will retry in 1min", err)
+			s.Reset()
+			time.Sleep(time.Minute)
+			continue
+		}
+
+		s.Close()
+		break
+	}
+
+	// schedule refresh
+	go func() {
+		time.Sleep(30 * time.Minute)
+		go c.connectToRelay()
+	}()
 }
 
 func (c *Client) connectToServer() (network.Stream, error) {
-	pi, err := c.serverAddress()
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to server: %w", err)
-	}
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	err = c.host.Connect(ctx, *pi)
+	err := c.host.Connect(ctx, *c.server)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to server: %w", err)
 	}
@@ -282,14 +398,6 @@ func (c *Client) connectToServer() (network.Stream, error) {
 	return s, nil
 }
 
-func (c *Client) serverAddress() (*peer.AddrInfo, error) {
-	if c.domain == "TCP" {
-		return parseAddrInfo(c.cfg.ServerAddrTCP)
-	} else {
-		return parseAddrInfo(c.cfg.ServerAddrUDP)
-	}
-}
-
 func peerInfoToClientInfo(pi *pb.PeerInfo) (*ClientInfo, error) {
 	result := new(ClientInfo)
 	result.Nick = pi.GetNick()
@@ -309,6 +417,16 @@ func peerInfoToClientInfo(pi *pb.PeerInfo) (*ClientInfo, error) {
 	}
 
 	return result, nil
+}
+
+func makePeerInfo(nick string, pi peer.AddrInfo) *pb.PeerInfo {
+	result := new(pb.PeerInfo)
+	result.Nick = &nick
+	result.PeerID = []byte(pi.ID)
+	for _, a := range pi.Addrs {
+		result.Addrs = append(result.Addrs, a.Bytes())
+	}
+	return result
 }
 
 func isRelayConn(conn network.Conn) bool {

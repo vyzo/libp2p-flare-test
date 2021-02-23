@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -20,8 +21,7 @@ const maxMsgSize = 4096
 type Daemon struct {
 	sync.Mutex
 	secret string
-	peers  map[peer.ID]struct{}
-	info   map[string]map[peer.ID]*ClientInfo
+	peers  map[string]map[peer.ID]*ClientInfo
 }
 
 type ClientInfo struct {
@@ -32,11 +32,24 @@ type ClientInfo struct {
 func NewDaemon(h host.Host, cfg *Config) *Daemon {
 	daemon := &Daemon{
 		secret: cfg.Secret,
-		peers:  make(map[peer.ID]struct{}),
-		info:   make(map[string]map[peer.ID]*ClientInfo),
+		peers:  make(map[string]map[peer.ID]*ClientInfo),
 	}
 	h.SetStreamHandler(proto.ProtoID, daemon.handleStream)
+	h.Network().Notify(&network.NotifyBundle{
+		DisconnectedF: daemon.disconnect,
+	})
 	return daemon
+}
+
+func (d *Daemon) disconnect(n network.Network, c network.Conn) {
+	p := c.RemotePeer()
+
+	d.Lock()
+	defer d.Unlock()
+
+	for _, peers := range d.peers {
+		delete(peers, p)
+	}
 }
 
 func (d *Daemon) handleStream(s network.Stream) {
@@ -44,27 +57,6 @@ func (d *Daemon) handleStream(s network.Stream) {
 
 	p := s.Conn().RemotePeer()
 	log.Debugf("incoming stream from %s at %s", p, s.Conn().RemoteMultiaddr())
-
-	d.Lock()
-	_, active := d.peers[p]
-	if !active {
-		d.peers[p] = struct{}{}
-	}
-	d.Unlock()
-	if active {
-		log.Warnf("already have presence from %s; resetting stream", p)
-		s.Reset()
-		return
-	}
-
-	defer func() {
-		d.Lock()
-		delete(d.peers, p)
-		for _, info := range d.info {
-			delete(info, p)
-		}
-		d.Unlock()
-	}()
 
 	var msg pb.FlareMessage
 	wr := protoio.NewDelimitedWriter(s)
@@ -146,6 +138,9 @@ func (d *Daemon) handleStream(s network.Stream) {
 	for {
 		msg.Reset()
 		if err := rd.ReadMsg(&msg); err != nil {
+			if err == io.EOF {
+				return
+			}
 			log.Warnf("error reading message from %s: %s", p, err)
 			s.Reset()
 			return
@@ -175,12 +170,12 @@ func (d *Daemon) handleStream(s network.Stream) {
 			}
 
 			d.Lock()
-			tab, ok := d.info[domain]
+			peers, ok := d.peers[domain]
 			if !ok {
-				tab = make(map[peer.ID]*ClientInfo)
-				d.info[domain] = tab
+				peers = make(map[peer.ID]*ClientInfo)
+				d.peers[domain] = peers
 			}
-			tab[p] = cinfo
+			peers[p] = cinfo
 			d.Unlock()
 
 		case pb.FlareMessage_GETPEERS:
@@ -195,9 +190,9 @@ func (d *Daemon) handleStream(s network.Stream) {
 
 			var pis []*pb.PeerInfo
 			d.Lock()
-			tab, ok := d.info[domain]
+			peers, ok := d.peers[domain]
 			if ok {
-				for _, info := range tab {
+				for _, info := range peers {
 					if info.pi.ID == p {
 						continue
 					}

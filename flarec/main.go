@@ -83,7 +83,7 @@ func main() {
 			fatalf("error constructing TCP host: %s", err)
 		}
 
-		client := NewClient(host, &cfg, "TCP")
+		client := NewClient(host, &cfg, "TCP", nick)
 		clients = append(clients, client)
 	}
 
@@ -109,7 +109,7 @@ func main() {
 			fatalf("error constructing UDP host: %s", err)
 		}
 
-		client := NewClient(host, &cfg, "UDP")
+		client := NewClient(host, &cfg, "UDP", nick)
 		clients = append(clients, client)
 	}
 
