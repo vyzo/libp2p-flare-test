@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-const ProtoID = "/libp2p/flare-test"
+const ProtoID = "/libp2p/flare-test/presence"
 
 func Proof(secret string, nonce []byte) []byte {
 	secretBytes := []byte(secret)
