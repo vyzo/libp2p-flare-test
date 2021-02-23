@@ -47,14 +47,14 @@ func main() {
 	var cfg Config
 	err := util.LoadConfig(*cfgPath, &cfg)
 	if err != nil {
-		panic(err)
+		fatalf("error loading config: %s", err)
 	}
 
 	nick := *nickname
 	if nick == "" {
 		user, err := user.Current()
 		if err != nil {
-			panic(err)
+			fatalf("error getting current user: %s", err)
 		}
 		nick = user.Username
 	}
@@ -64,7 +64,7 @@ func main() {
 	if *enableTCP {
 		privk, err := util.LoadIdentity(*idTCPPath)
 		if err != nil {
-			panic(err)
+			fatalf("error loading TCP identity: %s", err)
 		}
 
 		var opts []libp2p.Option
@@ -80,7 +80,7 @@ func main() {
 
 		host, err := libp2p.New(context.Background(), opts...)
 		if err != nil {
-			panic(err)
+			fatalf("error constructing TCP host: %s", err)
 		}
 
 		client := NewClient(host, &cfg, "TCP")
@@ -90,7 +90,7 @@ func main() {
 	if *enableUDP {
 		privk, err := util.LoadIdentity(*idUDPPath)
 		if err != nil {
-			panic(err)
+			fatalf("error loading UDP identity: %s", err)
 		}
 
 		var opts []libp2p.Option
@@ -106,7 +106,7 @@ func main() {
 
 		host, err := libp2p.New(context.Background(), opts...)
 		if err != nil {
-			panic(err)
+			fatalf("error constructing UDP host: %s", err)
 		}
 
 		client := NewClient(host, &cfg, "UDP")
@@ -117,8 +117,7 @@ func main() {
 		for _, c := range clients {
 			peers, err := c.ListPeers()
 			if err != nil {
-				fmt.Printf("error retrieving peers: %s", err)
-				os.Exit(1)
+				fatalf("error retrieving peers: %s", err)
 			}
 
 			fmt.Printf("%s peers:\n", c.Domain())
@@ -135,8 +134,7 @@ func main() {
 			fmt.Printf("Eagerly testing with %s\n", c.Domain())
 			peers, err := c.ListPeers()
 			if err != nil {
-				fmt.Printf("error retrieving peers: %s", err)
-				os.Exit(1)
+				fatalf("error retrieving peers: %s", err)
 			}
 
 			for _, p := range peers {
@@ -167,4 +165,9 @@ func main() {
 	}
 
 	select {}
+}
+
+func fatalf(template string, args ...interface{}) {
+	fmt.Printf(template+"\n", args...)
+	os.Exit(1)
 }
