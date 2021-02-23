@@ -1,3 +1,7 @@
 package main
 
-type Config struct{}
+type Config struct {
+	Secret        string
+	ServerAddrTCP string
+	ServerAddrUDP string
+}
