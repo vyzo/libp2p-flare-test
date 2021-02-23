@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vyzo/libp2p-flare-test/flare"
 	pb "github.com/vyzo/libp2p-flare-test/pb"
+	"github.com/vyzo/libp2p-flare-test/proto"
 
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
@@ -35,7 +35,7 @@ func NewDaemon(h host.Host, cfg *Config) *Daemon {
 		peers:  make(map[peer.ID]struct{}),
 		info:   make(map[string]map[peer.ID]*ClientInfo),
 	}
-	h.SetStreamHandler(flare.ProtoID, daemon.handleStream)
+	h.SetStreamHandler(proto.ProtoID, daemon.handleStream)
 	return daemon
 }
 
@@ -92,8 +92,8 @@ func (d *Daemon) handleStream(s network.Stream) {
 	}
 
 	proofNonce := auth.GetNonce()
-	proof := flare.Proof(d.secret, proofNonce)
-	challengeNonce, err := flare.Nonce()
+	proof := proto.Proof(d.secret, proofNonce)
+	challengeNonce, err := proto.Nonce()
 	if err != nil {
 		log.Warnf("error generating nonce for %s: %s", p, err)
 		s.Reset()
@@ -134,7 +134,7 @@ func (d *Daemon) handleStream(s network.Stream) {
 	}
 
 	proof = resp.GetProof()
-	if !flare.Verify(d.secret, challengeNonce, proof) {
+	if !proto.Verify(d.secret, challengeNonce, proof) {
 		log.Warnf("authentication failure from %s", p)
 		s.Reset()
 		return

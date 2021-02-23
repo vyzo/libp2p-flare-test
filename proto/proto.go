@@ -1,4 +1,4 @@
-package flare
+package proto
 
 import (
 	"bytes"
