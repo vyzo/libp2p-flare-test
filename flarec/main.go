@@ -29,15 +29,20 @@ func init() {
 }
 
 func main() {
-	idTCPPath := flag.String("-idTCP", "identity-tcp", "identity key file path for TCP host")
-	idUDPPath := flag.String("-idUDP", "identity-udp", "identity key file path for UDP host")
-	cfgPath := flag.String("-config", "config.json", "json configuration file")
+	idTCPPath := flag.String("idTCP", "identity-tcp", "identity key file path for TCP host")
+	idUDPPath := flag.String("idUDP", "identity-udp", "identity key file path for UDP host")
+	cfgPath := flag.String("config", "config.json", "json configuration file")
 	enableTCP := flag.Bool("tcp", true, "enable TCP host")
 	enableUDP := flag.Bool("udp", true, "enable UDP host")
 	listPeers := flag.Bool("listPeers", false, "list peers and exit")
 	eagerTest := flag.Bool("eagerTest", false, "eagerly try to hole punch with all known peers and exit")
 	nickname := flag.String("nick", "", "nickname for peer; defaults to the current user login id")
+	quiet := flag.Bool("quiet", false, "only log errors")
 	flag.Parse()
+
+	if *quiet {
+		logging.SetLogLevel("*", "ERROR")
+	}
 
 	var cfg Config
 	err := util.LoadConfig(*cfgPath, &cfg)
