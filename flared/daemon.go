@@ -135,7 +135,7 @@ func (d *Daemon) handleStream(s network.Stream) {
 
 	proof = resp.GetProof()
 	if !proto.Verify(d.secret, challengeNonce, proof) {
-		log.Warnf("authentication failure from %s", p)
+		log.Errorf("authentication failure from %s", p)
 		s.Reset()
 		return
 	}
