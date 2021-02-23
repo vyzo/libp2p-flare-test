@@ -198,6 +198,9 @@ func (d *Daemon) handleStream(s network.Stream) {
 			tab, ok := d.info[domain]
 			if ok {
 				for _, info := range tab {
+					if info.pi.ID == p {
+						continue
+					}
 					pi := peerInfoFromClientInfo(info)
 					pis = append(pis, pi)
 				}
