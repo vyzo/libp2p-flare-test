@@ -24,6 +24,7 @@ var log = logging.Logger("flare")
 
 func init() {
 	identify.ClientVersion = "flared/0.1"
+	logging.SetLogLevel("flare", "DEBUG")
 }
 
 func main() {
