@@ -157,7 +157,7 @@ func main() {
 		for _, a := range c.Addrs() {
 			fmt.Printf("\t%s\n", a)
 		}
-		c.Background()
+		go c.Background()
 	}
 
 	if len(clients) == 0 {

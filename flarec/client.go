@@ -16,6 +16,45 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
+var bootstrappersTCPString = []string{
+	"/ip4/147.75.83.83/tcp/4001/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+	"/ip4/147.75.77.187/tcp/4001/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+	"/ip4/147.75.94.115/tcp/4001/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+	"/ip4/147.75.109.213/tcp/4001/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+	"/ip4/147.75.109.29/tcp/4001/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
+}
+
+var bootstrappersUDPString = []string{
+	"/ip4/147.75.83.83/udp/4001/quic/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+	"/ip4/147.75.77.187/udp/4001/quic/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
+	"/ip4/147.75.94.115/udp/4001/quic/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+	"/ip4/147.75.109.213/udp/4001/quic/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+	"/ip4/147.75.109.29/udp/4001/quic/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp",
+}
+
+var bootstrappersTCP []*peer.AddrInfo
+var bootstrappersUDP []*peer.AddrInfo
+
+func init() {
+	for _, a := range bootstrappersTCPString {
+		pi, err := parseAddrInfo(a)
+		if err != nil {
+			panic(err)
+		}
+
+		bootstrappersTCP = append(bootstrappersTCP, pi)
+	}
+
+	for _, a := range bootstrappersUDPString {
+		pi, err := parseAddrInfo(a)
+		if err != nil {
+			panic(err)
+		}
+
+		bootstrappersUDP = append(bootstrappersUDP, pi)
+	}
+}
+
 type Client struct {
 	host   host.Host
 	cfg    *Config
@@ -102,6 +141,59 @@ func (c *Client) getPeers(s network.Stream) ([]*ClientInfo, error) {
 }
 
 func (c *Client) Connect(ci *ClientInfo) error {
+	err := c.connectToBootstrappers()
+	if err != nil {
+		return fmt.Errorf("error connecting to bootstrappers: %w", err)
+	}
+
+	// let identify get our observed addresses before starting
+	time.Sleep(time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	err = c.host.Connect(ctx, ci.Info)
+	if err != nil {
+		return fmt.Errorf("error esstablishing initial connection to peer: %w", err)
+	}
+
+	deadline := time.After(time.Minute)
+poll:
+	for {
+		for _, conn := range c.host.Network().ConnsToPeer(ci.Info.ID) {
+			if !isRelayConn(conn) {
+				return nil
+			}
+		}
+
+		select {
+		case <-deadline:
+			break poll
+		case <-time.After(time.Second):
+		}
+	}
+
+	return fmt.Errorf("no direct connection to peer")
+}
+
+func (c *Client) connectToBootstrappers() error {
+	var pis []*peer.AddrInfo
+	if c.domain == "TCP" {
+		pis = bootstrappersTCP
+	} else {
+		pis = bootstrappersUDP
+	}
+
+	for _, pi := range pis {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		err := c.host.Connect(ctx, *pi)
+		cancel()
+
+		if err != nil {
+			return fmt.Errorf("error connecting to bootstrapper %s: %w", pi.ID, err)
+		}
+	}
+
 	return nil
 }
 
@@ -191,18 +283,10 @@ func (c *Client) connectToServer() (network.Stream, error) {
 }
 
 func (c *Client) serverAddress() (*peer.AddrInfo, error) {
-	parse := func(s string) (*peer.AddrInfo, error) {
-		addr, err := ma.NewMultiaddr(s)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing server address: %w", err)
-		}
-		return peer.AddrInfoFromP2pAddr(addr)
-	}
-
 	if c.domain == "TCP" {
-		return parse(c.cfg.ServerAddrTCP)
+		return parseAddrInfo(c.cfg.ServerAddrTCP)
 	} else {
-		return parse(c.cfg.ServerAddrUDP)
+		return parseAddrInfo(c.cfg.ServerAddrUDP)
 	}
 }
 
@@ -225,4 +309,18 @@ func peerInfoToClientInfo(pi *pb.PeerInfo) (*ClientInfo, error) {
 	}
 
 	return result, nil
+}
+
+func isRelayConn(conn network.Conn) bool {
+	addr := conn.RemoteMultiaddr()
+	_, err := addr.ValueForProtocol(ma.P_CIRCUIT)
+	return err == nil
+}
+
+func parseAddrInfo(s string) (*peer.AddrInfo, error) {
+	addr, err := ma.NewMultiaddr(s)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing address: %w", err)
+	}
+	return peer.AddrInfoFromP2pAddr(addr)
 }
