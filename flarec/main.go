@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/user"
+	"sync"
 
 	"github.com/vyzo/libp2p-flare-test/util"
 
@@ -87,6 +88,7 @@ func main() {
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"),
 			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(),
+			libp2p.ForceReachabilityPrivate(),
 		)
 
 		host, err := libp2p.New(context.Background(), opts...)
@@ -122,6 +124,7 @@ func main() {
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/0/quic"),
 			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(),
+			libp2p.ForceReachabilityPrivate(),
 		)
 
 		host, err := libp2p.New(context.Background(), opts...)
@@ -174,20 +177,18 @@ func main() {
 	}
 
 	// background mode
+	var wg sync.WaitGroup
 	for _, c := range clients {
 		fmt.Printf("I am %s for %s\n", c.ID(), c.Domain())
 		fmt.Printf("Addresses: \n")
 		for _, a := range c.Addrs() {
 			fmt.Printf("\t%s\n", a)
 		}
-		go c.Background()
+		wg.Add(1)
+		go c.Background(&wg)
 	}
 
-	if len(clients) == 0 {
-		return
-	}
-
-	select {}
+	wg.Wait()
 }
 
 func fatalf(template string, args ...interface{}) {

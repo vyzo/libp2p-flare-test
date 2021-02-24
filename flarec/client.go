@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	pb "github.com/vyzo/libp2p-flare-test/pb"
 	"github.com/vyzo/libp2p-flare-test/proto"
 
+	"github.com/libp2p/go-libp2p-core/event"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -229,7 +231,22 @@ func (c *Client) connectToBootstrappers() error {
 	return nil
 }
 
-func (c *Client) Background() {
+func (c *Client) Background(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	natType, err := c.getNATType()
+	if err != nil {
+		log.Errorf("error determining NAT type: %s", err)
+		return
+	}
+
+	if natType == network.NATDeviceTypeSymmetric {
+		log.Errorf("%s NAT type is impenetrable; sorry", c.domain)
+		return
+	}
+
+	log.Infof("%s NAT Device Type is %s", c.domain, natType)
+
 	c.connectToRelay()
 
 	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))
@@ -257,6 +274,38 @@ func (c *Client) Background() {
 		sleep = 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
 		log.Infof("waiting for %s...", sleep)
 		time.Sleep(sleep)
+	}
+}
+
+func (c *Client) getNATType() (network.NATDeviceType, error) {
+	sub, err := c.host.EventBus().Subscribe(new(event.EvtNATDeviceTypeChanged))
+	if err != nil {
+		return 0, err
+	}
+	defer sub.Close()
+
+	err = c.connectToBootstrappers()
+	if err != nil {
+		return 0, err
+	}
+
+	for {
+		select {
+		case evt := <-sub.Out():
+			e := evt.(event.EvtNATDeviceTypeChanged)
+			switch c.domain {
+			case "TCP":
+				if e.TransportProtocol == network.NATTransportTCP {
+					return e.NatDeviceType, nil
+				}
+			case "UDP":
+				if e.TransportProtocol == network.NATTransportUDP {
+					return e.NatDeviceType, nil
+				}
+			}
+		case <-time.After(time.Minute):
+			return 0, fmt.Errorf("timed out waiting for NAT type determination")
+		}
 	}
 }
 
