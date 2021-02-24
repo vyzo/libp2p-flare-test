@@ -368,7 +368,11 @@ func (c *Client) connectToRelay() {
 	// schedule refresh
 	go func() {
 		time.Sleep(30 * time.Minute)
-		go c.connectToRelay()
+		err := c.connectToBootstrappers()
+		if err != nil {
+			log.Warnf("error connecting to bootstrappers: %s", err)
+		}
+		c.connectToRelay()
 	}()
 }
 
