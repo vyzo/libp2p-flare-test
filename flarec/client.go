@@ -376,17 +376,26 @@ func (c *Client) connectToServer() (network.Stream, error) {
 	}
 
 	serverProof := challenge.GetProof()
+	serverSalt := challenge.GetSalt()
 	serverNonce := challenge.GetNonce()
-	if !proto.Verify(c.cfg.Secret, nonce, serverProof) {
+	if !proto.Verify(c.cfg.Secret, serverSalt, nonce, serverProof) {
 		s.Reset()
 		return nil, fmt.Errorf("unexpected server response: authentication failure")
 	}
 
-	proof := proto.Proof(c.cfg.Secret, serverNonce)
+	salt, err := proto.Nonce()
+	if err != nil {
+		s.Reset()
+		return nil, fmt.Errorf("error generating authen salt: %w", err)
+	}
+	proof := proto.Proof(c.cfg.Secret, salt, serverNonce)
 
 	msg.Reset()
 	msg.Type = pb.FlareMessage_RESPONSE.Enum()
-	msg.Response = &pb.Response{Proof: proof}
+	msg.Response = &pb.Response{
+		Proof: proof,
+		Salt:  salt,
+	}
 
 	if err := wr.WriteMsg(&msg); err != nil {
 		s.Reset()

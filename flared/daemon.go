@@ -83,8 +83,14 @@ func (d *Daemon) handleStream(s network.Stream) {
 		return
 	}
 
-	proofNonce := auth.GetNonce()
-	proof := proto.Proof(d.secret, proofNonce)
+	authNonce := auth.GetNonce()
+	salt, err := proto.Nonce()
+	if err != nil {
+		log.Warnf("error generating salt for %s: %s", p, err)
+		s.Reset()
+		return
+	}
+	proof := proto.Proof(d.secret, salt, authNonce)
 	challengeNonce, err := proto.Nonce()
 	if err != nil {
 		log.Warnf("error generating nonce for %s: %s", p, err)
@@ -96,6 +102,7 @@ func (d *Daemon) handleStream(s network.Stream) {
 	msg.Type = pb.FlareMessage_CHALLENGE.Enum()
 	msg.Challenge = &pb.Challenge{
 		Proof: proof,
+		Salt:  salt,
 		Nonce: challengeNonce,
 	}
 	if err := wr.WriteMsg(&msg); err != nil {
@@ -126,7 +133,8 @@ func (d *Daemon) handleStream(s network.Stream) {
 	}
 
 	proof = resp.GetProof()
-	if !proto.Verify(d.secret, challengeNonce, proof) {
+	salt = resp.GetSalt()
+	if !proto.Verify(d.secret, salt, challengeNonce, proof) {
 		log.Errorf("authentication failure from %s", p)
 		s.Reset()
 		return

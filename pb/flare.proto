@@ -29,11 +29,14 @@ message Authen {
 
 message Challenge {
   required bytes proof = 1;
-  required bytes nonce = 2;
+  required bytes salt  = 2;
+  required bytes nonce = 3;
+
 }
 
 message Response {
-  required bytes proof = 3;
+  required bytes proof = 1;
+  required bytes salt  = 2;
 }
 
 message Announce {
