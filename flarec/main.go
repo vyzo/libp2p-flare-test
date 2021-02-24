@@ -12,6 +12,8 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
 
+	"github.com/libp2p/go-libp2p-core/crypto"
+
 	noise "github.com/libp2p/go-libp2p-noise"
 	quic "github.com/libp2p/go-libp2p-quic-transport"
 	tls "github.com/libp2p/go-libp2p-tls"
@@ -44,6 +46,8 @@ func main() {
 		logging.SetLogLevel("*", "ERROR")
 	}
 
+	persistentIds := !*listPeers && !*eagerTest
+
 	var cfg Config
 	err := util.LoadConfig(*cfgPath, &cfg)
 	if err != nil {
@@ -62,7 +66,12 @@ func main() {
 	var clients []*Client
 
 	if *enableTCP {
-		privk, err := util.LoadIdentity(*idTCPPath)
+		var privk crypto.PrivKey
+		if persistentIds {
+			privk, err = util.LoadIdentity(*idTCPPath)
+		} else {
+			privk, err = util.GenerateIdentity()
+		}
 		if err != nil {
 			fatalf("error loading TCP identity: %s", err)
 		}
@@ -91,7 +100,12 @@ func main() {
 	}
 
 	if *enableUDP {
-		privk, err := util.LoadIdentity(*idUDPPath)
+		var privk crypto.PrivKey
+		if persistentIds {
+			privk, err = util.LoadIdentity(*idUDPPath)
+		} else {
+			privk, err = util.GenerateIdentity()
+		}
 		if err != nil {
 			fatalf("error loading UDP identity: %s", err)
 		}

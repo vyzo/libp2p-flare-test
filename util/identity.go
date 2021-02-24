@@ -13,7 +13,7 @@ func LoadIdentity(idPath string) (crypto.PrivKey, error) {
 		return readIdentity(idPath)
 	} else if os.IsNotExist(err) {
 		fmt.Printf("Generating peer identity in %s", idPath)
-		return generateIdentity(idPath)
+		return generatePersistentIdentity(idPath)
 	} else {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func readIdentity(path string) (crypto.PrivKey, error) {
 	return crypto.UnmarshalPrivateKey(bytes)
 }
 
-func generateIdentity(path string) (crypto.PrivKey, error) {
+func generatePersistentIdentity(path string) (crypto.PrivKey, error) {
 	privk, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
 	if err != nil {
 		return nil, err
@@ -41,5 +41,10 @@ func generateIdentity(path string) (crypto.PrivKey, error) {
 
 	err = ioutil.WriteFile(path, bytes, 0400)
 
+	return privk, err
+}
+
+func GenerateIdentity() (crypto.PrivKey, error) {
+	privk, _, err := crypto.GenerateKeyPair(crypto.Ed25519, 0)
 	return privk, err
 }
