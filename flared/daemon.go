@@ -177,6 +177,8 @@ func (d *Daemon) handleStream(s network.Stream) {
 				return
 			}
 
+			log.Infof("peer %s announced presence", p)
+
 			d.Lock()
 			peers, ok := d.peers[domain]
 			if !ok {
