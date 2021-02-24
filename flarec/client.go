@@ -186,7 +186,7 @@ func (c *Client) Connect(ci *ClientInfo) error {
 
 	err = c.host.Connect(ctx, ci.Info)
 	if err != nil {
-		return fmt.Errorf("error esstablishing initial connection to peer: %w", err)
+		return fmt.Errorf("error establishing initial connection to peer: %w", err)
 	}
 
 	deadline := time.After(time.Minute)
