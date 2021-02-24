@@ -5,8 +5,8 @@ go 1.15
 require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/ipfs/go-log v1.0.4
-	github.com/libp2p/go-libp2p v0.13.1-0.20210223170713-6aea3231ae56
-	github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210219221135-acf512620b1a
+	github.com/libp2p/go-libp2p v0.13.1-0.20210224130349-d0ed96be853a
+	github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210224122836-9bc121b89dfb
 	github.com/libp2p/go-libp2p-core v0.8.5
 	github.com/libp2p/go-libp2p-noise v0.1.2
 	github.com/libp2p/go-libp2p-quic-transport v0.10.1-0.20210222105520-71724d9b1a59

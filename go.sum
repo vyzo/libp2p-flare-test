@@ -223,6 +223,8 @@ github.com/libp2p/go-libp2p v0.13.0 h1:tDdrXARSghmusdm0nf1U/4M8aj8Rr0V2IzQOXmbzQ
 github.com/libp2p/go-libp2p v0.13.0/go.mod h1:pM0beYdACRfHO1WcJlp65WXyG2A6NqYM+t2DTVAJxMo=
 github.com/libp2p/go-libp2p v0.13.1-0.20210223170713-6aea3231ae56 h1:mg1G1LiuHFeQ/hnl6nZiFm/4t7NhsoujRbTiyDMwRRg=
 github.com/libp2p/go-libp2p v0.13.1-0.20210223170713-6aea3231ae56/go.mod h1:94aGgBVRVCWS0nwshMw6SIntRTYxm7AUeneScasmNAg=
+github.com/libp2p/go-libp2p v0.13.1-0.20210224130349-d0ed96be853a h1:Dl9EINrBdL6kqsmm9MPncsebRxFDQpdx/narHbZPSz8=
+github.com/libp2p/go-libp2p v0.13.1-0.20210224130349-d0ed96be853a/go.mod h1:94aGgBVRVCWS0nwshMw6SIntRTYxm7AUeneScasmNAg=
 github.com/libp2p/go-libp2p-asn-util v0.0.0-20210211060025-0db24c10d3bd/go.mod h1:nRMRTab+kZuk0LnKZpxhOVH/ndsdr2Nr//Zltc/vwgo=
 github.com/libp2p/go-libp2p-autonat v0.1.1/go.mod h1:OXqkeGOY2xJVWKAGV2inNF5aKN/djNA3fdpCWloIudE=
 github.com/libp2p/go-libp2p-autonat v0.2.0/go.mod h1:DX+9teU4pEEoZUqR1PiMlqliONQdNbfzE1C718tcViI=
@@ -240,6 +242,8 @@ github.com/libp2p/go-libp2p-circuit v0.4.0 h1:eqQ3sEYkGTtybWgr6JLqJY6QLtPWRErvFj
 github.com/libp2p/go-libp2p-circuit v0.4.0/go.mod h1:t/ktoFIUzM6uLQ+o1G6NuBl2ANhBKN9Bc8jRIk31MoA=
 github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210219221135-acf512620b1a h1:o3lSbSYBFaiM6E7LSL3plAnsZlzS8w0rpcLccTwwtHc=
 github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210219221135-acf512620b1a/go.mod h1:YeUzEy50jG3sJMhAUxj+VoAqcdLqWGmJ70QhcHb6r6E=
+github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210224122836-9bc121b89dfb h1:h3AxSZ0MujVBlXaCFpVKdw2WDctBX6ry+3j2Ks1rD18=
+github.com/libp2p/go-libp2p-circuit v0.4.1-0.20210224122836-9bc121b89dfb/go.mod h1:YeUzEy50jG3sJMhAUxj+VoAqcdLqWGmJ70QhcHb6r6E=
 github.com/libp2p/go-libp2p-core v0.0.1/go.mod h1:g/VxnTZ/1ygHxH3dKok7Vno1VfpvGcGip57wjTU4fco=
 github.com/libp2p/go-libp2p-core v0.0.4/go.mod h1:jyuCQP356gzfCFtRKyvAbNkyeuxb7OlyhWZ3nls5d2I=
 github.com/libp2p/go-libp2p-core v0.2.0/go.mod h1:X0eyB0Gy93v0DZtSYbEM7RnMChm9Uv3j7yRXjO77xSI=
