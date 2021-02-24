@@ -71,28 +71,28 @@ type ClientInfo struct {
 	Info peer.AddrInfo
 }
 
-func NewClient(h host.Host, cfg *Config, domain, nick string) *Client {
+func NewClient(h host.Host, cfg *Config, domain, nick string) (*Client, error) {
 	var relay, server *peer.AddrInfo
 	var err error
 	if domain == "TCP" {
 		relay, err = parseAddrInfo(cfg.RelayAddrTCP)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		server, err = parseAddrInfo(cfg.ServerAddrTCP)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else {
 		relay, err = parseAddrInfo(cfg.RelayAddrUDP)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		server, err = parseAddrInfo(cfg.ServerAddrUDP)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
@@ -103,7 +103,7 @@ func NewClient(h host.Host, cfg *Config, domain, nick string) *Client {
 		nick:   nick,
 		relay:  relay,
 		server: server,
-	}
+	}, nil
 }
 
 func (c *Client) Domain() string {
