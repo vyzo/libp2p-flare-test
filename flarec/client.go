@@ -332,7 +332,7 @@ func (c *Client) connectToServer() (network.Stream, error) {
 		return nil, fmt.Errorf("error connecting to server: %w", err)
 	}
 
-	s, err := c.host.NewStream(ctx, proto.ProtoID)
+	s, err := c.host.NewStream(ctx, c.server.ID, proto.ProtoID)
 	if err != nil {
 		return nil, fmt.Errorf("error opening stream to server: %W", err)
 	}

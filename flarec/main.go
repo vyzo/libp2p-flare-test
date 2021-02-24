@@ -84,6 +84,7 @@ func main() {
 			libp2p.Security(tls.ID, tls.New),
 			libp2p.NoTransports,
 			libp2p.Transport(tcp.NewTCPTransport),
+			libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"),
 			libp2p.EnableHolePunching(),
 		)
 
@@ -118,6 +119,7 @@ func main() {
 			libp2p.Security(tls.ID, tls.New),
 			libp2p.NoTransports,
 			libp2p.Transport(quic.NewTransport),
+			libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/0/quic"),
 			libp2p.EnableHolePunching(),
 		)
 
