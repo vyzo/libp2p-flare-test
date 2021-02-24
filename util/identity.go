@@ -12,7 +12,7 @@ func LoadIdentity(idPath string) (crypto.PrivKey, error) {
 	if _, err := os.Stat(idPath); err == nil {
 		return readIdentity(idPath)
 	} else if os.IsNotExist(err) {
-		fmt.Printf("Generating peer identity in %s", idPath)
+		fmt.Printf("Generating peer identity in %s\n", idPath)
 		return generatePersistentIdentity(idPath)
 	} else {
 		return nil, err
