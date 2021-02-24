@@ -28,6 +28,7 @@ func init() {
 	identify.ClientVersion = "flarec/0.1"
 	logging.SetLogLevel("flare", "DEBUG")
 	logging.SetLogLevel("p2p-holepunch", "DEBUG")
+	logging.SetLogLevel("p2p-circuit", "DEBUG")
 }
 
 func main() {
@@ -79,12 +80,12 @@ func main() {
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
-			libp2p.EnableRelay(),
+			libp2p.NoTransports,
 			libp2p.Security(noise.ID, noise.New),
 			libp2p.Security(tls.ID, tls.New),
-			libp2p.NoTransports,
 			libp2p.Transport(tcp.NewTCPTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"),
+			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(),
 		)
 
@@ -114,12 +115,12 @@ func main() {
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
-			libp2p.EnableRelay(),
 			libp2p.Security(noise.ID, noise.New),
 			libp2p.Security(tls.ID, tls.New),
 			libp2p.NoTransports,
 			libp2p.Transport(quic.NewTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/0/quic"),
+			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(),
 		)
 
