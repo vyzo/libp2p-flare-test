@@ -232,7 +232,8 @@ func (c *Client) connectToBootstrappers() error {
 func (c *Client) Background() {
 	c.connectToRelay()
 
-	time.Sleep(time.Minute)
+	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))
+	time.Sleep(sleep)
 	for {
 		log.Infof("trying to connect to peers...")
 
@@ -253,7 +254,7 @@ func (c *Client) Background() {
 			}
 		}
 
-		sleep := 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
+		sleep = 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
 		log.Infof("waiting for %s...", sleep)
 		time.Sleep(sleep)
 	}
