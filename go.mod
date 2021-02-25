@@ -16,5 +16,5 @@ require (
 	github.com/libp2p/go-tcp-transport v0.2.1
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/multiformats/go-multiaddr v0.3.1
-	github.com/shirou/gopsutil v3.21.1+incompatible // indirect
+	github.com/shirou/gopsutil v0.0.0-20190323131628-2cbc9195c892 // indirect
 )
