@@ -256,14 +256,14 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 		return
 	}
 
+	log.Infof("%s NAT Device Type is %s", c.domain, natType)
+	c.tracer.Announce(natType.String())
+
 	if natType == network.NATDeviceTypeSymmetric {
 		log.Errorf("%s NAT type is impenetrable; sorry", c.domain)
 		return
 	}
 
-	log.Infof("%s NAT Device Type is %s", c.domain, natType)
-
-	c.tracer.Announce(natType.String())
 	c.connectToRelay()
 
 	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))
