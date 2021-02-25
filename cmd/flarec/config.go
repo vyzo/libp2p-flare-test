@@ -6,4 +6,5 @@ type Config struct {
 	ServerAddrUDP string
 	RelayAddrTCP  string
 	RelayAddrUDP  string
+	LogzioToken   string
 }
