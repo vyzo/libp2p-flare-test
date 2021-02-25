@@ -61,6 +61,7 @@ func init() {
 
 type Client struct {
 	host   host.Host
+	tracer *Tracer
 	cfg    *Config
 	domain string
 	nick   string
@@ -73,7 +74,7 @@ type ClientInfo struct {
 	Info peer.AddrInfo
 }
 
-func NewClient(h host.Host, cfg *Config, domain, nick string) (*Client, error) {
+func NewClient(h host.Host, tracer *Tracer, cfg *Config, domain, nick string) (*Client, error) {
 	var relay, server *peer.AddrInfo
 	var err error
 	if domain == "TCP" {
@@ -100,6 +101,7 @@ func NewClient(h host.Host, cfg *Config, domain, nick string) (*Client, error) {
 
 	return &Client{
 		host:   h,
+		tracer: tracer,
 		cfg:    cfg,
 		domain: domain,
 		nick:   nick,

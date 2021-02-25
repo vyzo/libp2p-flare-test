@@ -11,9 +11,11 @@ import (
 	"github.com/vyzo/libp2p-flare-test/util"
 
 	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 
 	noise "github.com/libp2p/go-libp2p-noise"
 	quic "github.com/libp2p/go-libp2p-quic-transport"
@@ -78,6 +80,14 @@ func main() {
 			fatalf("error loading TCP identity: %s", err)
 		}
 
+		id, err := peer.IDFromPrivateKey(privk)
+		if err != nil {
+			fatalf("error extracing peer ID: %s", err)
+		}
+
+		tracer := NewTracer(&cfg, id, "TCP", nick)
+		defer tracer.Close()
+
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
@@ -87,7 +97,7 @@ func main() {
 			libp2p.Transport(tcp.NewTCPTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"),
 			libp2p.EnableRelay(),
-			libp2p.EnableHolePunching(),
+			libp2p.EnableHolePunching(holepunch.WithTracer(tracer)),
 			libp2p.ForceReachabilityPrivate(),
 		)
 
@@ -96,7 +106,7 @@ func main() {
 			fatalf("error constructing TCP host: %s", err)
 		}
 
-		client, err := NewClient(host, &cfg, "TCP", nick)
+		client, err := NewClient(host, tracer, &cfg, "TCP", nick)
 		if err != nil {
 			fatalf("error creating client: %s", err)
 		}
@@ -114,6 +124,14 @@ func main() {
 			fatalf("error loading UDP identity: %s", err)
 		}
 
+		id, err := peer.IDFromPrivateKey(privk)
+		if err != nil {
+			fatalf("error extracing peer ID: %s", err)
+		}
+
+		tracer := NewTracer(&cfg, id, "UDP", nick)
+		defer tracer.Close()
+
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
@@ -123,7 +141,7 @@ func main() {
 			libp2p.Transport(quic.NewTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/0/quic"),
 			libp2p.EnableRelay(),
-			libp2p.EnableHolePunching(),
+			libp2p.EnableHolePunching(holepunch.WithTracer(tracer)),
 			libp2p.ForceReachabilityPrivate(),
 		)
 
@@ -132,7 +150,7 @@ func main() {
 			fatalf("error constructing UDP host: %s", err)
 		}
 
-		client, err := NewClient(host, &cfg, "UDP", nick)
+		client, err := NewClient(host, tracer, &cfg, "UDP", nick)
 		if err != nil {
 			fatalf("error creating client: %s", err)
 		}
