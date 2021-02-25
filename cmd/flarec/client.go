@@ -177,6 +177,13 @@ func (c *Client) getPeers(s network.Stream) ([]*ClientInfo, error) {
 }
 
 func (c *Client) Connect(ci *ClientInfo) error {
+	// check for existing connections first
+	for _, conn := range c.host.Network().ConnsToPeer(ci.Info.ID) {
+		if !isRelayConn(conn) {
+			return nil
+		}
+	}
+
 	err := c.connectToBootstrappers()
 	if err != nil {
 		return fmt.Errorf("error connecting to bootstrappers: %w", err)
@@ -185,10 +192,17 @@ func (c *Client) Connect(ci *ClientInfo) error {
 	// let identify get our observed addresses before starting
 	time.Sleep(time.Second)
 
+	err = c.connectToPeer(ci)
+	c.tracer.Connect(ci, err)
+
+	return err
+}
+
+func (c *Client) connectToPeer(ci *ClientInfo) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	err = c.host.Connect(ctx, ci.Info)
+	err := c.host.Connect(ctx, ci.Info)
 	if err != nil {
 		return fmt.Errorf("error establishing initial connection to peer: %w", err)
 	}
@@ -249,6 +263,7 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 
 	log.Infof("%s NAT Device Type is %s", c.domain, natType)
 
+	c.tracer.Announce(natType.String())
 	c.connectToRelay()
 
 	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))

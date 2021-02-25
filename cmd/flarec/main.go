@@ -85,7 +85,10 @@ func main() {
 			fatalf("error extracing peer ID: %s", err)
 		}
 
-		tracer := NewTracer(&cfg, id, "TCP", nick)
+		tracer, err := NewTracer(&cfg, id, "TCP", nick)
+		if err != nil {
+			fatalf("error creating tracer: %s", err)
+		}
 		defer tracer.Close()
 
 		var opts []libp2p.Option
@@ -129,7 +132,10 @@ func main() {
 			fatalf("error extracing peer ID: %s", err)
 		}
 
-		tracer := NewTracer(&cfg, id, "UDP", nick)
+		tracer, err := NewTracer(&cfg, id, "UDP", nick)
+		if err != nil {
+			fatalf("error creating tracer: %s", err)
+		}
 		defer tracer.Close()
 
 		var opts []libp2p.Option
