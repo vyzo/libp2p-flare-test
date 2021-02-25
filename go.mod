@@ -3,6 +3,7 @@ module github.com/vyzo/libp2p-flare-test
 go 1.15
 
 require (
+	github.com/beeker1121/goque v2.0.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/ipfs/go-log v1.0.4
 	github.com/libp2p/go-libp2p v0.13.1-0.20210225171238-348fb07462eb
@@ -13,5 +14,7 @@ require (
 	github.com/libp2p/go-libp2p-tls v0.1.3
 	github.com/libp2p/go-msgio v0.0.6
 	github.com/libp2p/go-tcp-transport v0.2.1
+	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/multiformats/go-multiaddr v0.3.1
+	github.com/shirou/gopsutil v3.21.1+incompatible // indirect
 )
