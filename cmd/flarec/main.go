@@ -91,6 +91,9 @@ func main() {
 		}
 		defer tracer.Close()
 
+		cm := NewConnManager()
+		defer cm.Close()
+
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
@@ -99,6 +102,7 @@ func main() {
 			libp2p.Security(tls.ID, tls.New),
 			libp2p.Transport(tcp.NewTCPTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/tcp/0"),
+			libp2p.ConnectionManager(cm),
 			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(holepunch.WithTracer(tracer)),
 			libp2p.ForceReachabilityPrivate(),
@@ -138,6 +142,9 @@ func main() {
 		}
 		defer tracer.Close()
 
+		cm := NewConnManager()
+		defer cm.Close()
+
 		var opts []libp2p.Option
 		opts = append(opts,
 			libp2p.Identity(privk),
@@ -146,6 +153,7 @@ func main() {
 			libp2p.NoTransports,
 			libp2p.Transport(quic.NewTransport),
 			libp2p.ListenAddrStrings("/ip4/0.0.0.0/udp/0/quic"),
+			libp2p.ConnectionManager(cm),
 			libp2p.EnableRelay(),
 			libp2p.EnableHolePunching(holepunch.WithTracer(tracer)),
 			libp2p.ForceReachabilityPrivate(),
