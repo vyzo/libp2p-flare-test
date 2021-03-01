@@ -53,14 +53,18 @@ func (c *ConnManager) Protect(id peer.ID, tag string) {
 	c.Lock()
 	defer c.Unlock()
 
-	log.Debugf("protect peer %s for %s", id, tag)
-
 	tags, ok := c.protected[id]
 	if !ok {
 		tags = make(map[string]struct{})
 		c.protected[id] = tags
 	}
 
+	_, protected := tags[tag]
+	if protected {
+		return
+	}
+
+	log.Debugf("protect peer %s for %s", id, tag)
 	tags[tag] = struct{}{}
 }
 
