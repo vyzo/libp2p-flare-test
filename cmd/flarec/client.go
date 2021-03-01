@@ -352,6 +352,8 @@ func (c *Client) connectToRelay() {
 		}
 	}
 
+	c.host.ConnManager().Protect(c.relay.ID, "flare")
+
 	// announce our slot to the server
 	for {
 		s, err := c.connectToServer()
@@ -379,6 +381,8 @@ func (c *Client) connectToRelay() {
 		}
 
 		s.Close()
+
+		c.host.ConnManager().Protect(c.server.ID, "flare")
 		break
 	}
 

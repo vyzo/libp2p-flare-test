@@ -53,6 +53,8 @@ func (c *ConnManager) Protect(id peer.ID, tag string) {
 	c.Lock()
 	defer c.Unlock()
 
+	log.Debugf("protect peer %s for %s", id, tag)
+
 	tags, ok := c.protected[id]
 	if !ok {
 		tags = make(map[string]struct{})
@@ -65,6 +67,8 @@ func (c *ConnManager) Protect(id peer.ID, tag string) {
 func (c *ConnManager) Unprotect(id peer.ID, tag string) bool {
 	c.Lock()
 	defer c.Unlock()
+
+	log.Debugf("unprotect peer %s for %s", id, tag)
 
 	tags, ok := c.protected[id]
 	if !ok {
@@ -165,11 +169,11 @@ func (c *ConnManager) trim(now time.Time) {
 				continue
 			}
 
-			log.Debugf("closing stale network connection %s", conn)
+			log.Debugf("closing stale network connection to %s {%s}", p, conn)
 
 			err := conn.Close()
 			if err != nil {
-				log.Warnf("error closing connection %s: %s", conn, err)
+				log.Warnf("error closing connection to %s: %s", p, err)
 			}
 
 			delete(conns, conn)
