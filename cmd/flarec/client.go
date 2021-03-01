@@ -234,14 +234,22 @@ func (c *Client) connectToBootstrappers() error {
 		pis = bootstrappersUDP
 	}
 
+	count := 0
 	for _, pi := range pis {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		err := c.host.Connect(ctx, *pi)
 		cancel()
 
 		if err != nil {
-			return fmt.Errorf("error connecting to bootstrapper %s: %w", pi.ID, err)
+			log.Warnf("error connecting to bootstrapper %s: %s", pi.ID, err)
+		} else {
+			c.host.ConnManager().Protect(pi.ID, "flare")
+			count++
 		}
+	}
+
+	if count < 4 {
+		return fmt.Errorf("could not connect to enough bootstrappers -- need 4, got %d", count)
 	}
 
 	return nil
