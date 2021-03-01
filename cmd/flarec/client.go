@@ -296,7 +296,13 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 			}
 		}
 
-		sleep = 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
+		if len(peers) > 25 {
+			sleep = 2*time.Hour + time.Duration(rand.Intn(int(4*time.Hour)))
+		} else if len(peers) > 10 {
+			sleep = time.Hour + time.Duration(rand.Intn(int(2*time.Hour)))
+		} else {
+			sleep = 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
+		}
 		log.Infof("waiting for %s...", sleep)
 		time.Sleep(sleep)
 	}
