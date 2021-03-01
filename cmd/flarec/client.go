@@ -275,6 +275,7 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 	c.connectToRelay()
 
 	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))
+	log.Infof("waiting for %s...", sleep)
 	time.Sleep(sleep)
 	for {
 		log.Infof("trying to connect to peers...")
