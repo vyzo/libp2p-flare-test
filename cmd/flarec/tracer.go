@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"runtime"
 	"time"
 
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -37,6 +39,7 @@ const (
 )
 
 type AnnounceEvt struct {
+	OSType  string
 	NATType string
 }
 
@@ -90,6 +93,7 @@ func (t *Tracer) send(et string, e interface{}) {
 
 func (t *Tracer) Announce(natType string) {
 	t.send(AnnounceEvtT, &AnnounceEvt{
+		OSType:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 		NATType: natType,
 	})
 }
