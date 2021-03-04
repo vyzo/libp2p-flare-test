@@ -274,7 +274,7 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 
 	c.connectToRelay()
 
-	sleep := 15*time.Minute + time.Duration(rand.Intn(int(30*time.Minute)))
+	sleep := 15*time.Minute + time.Duration(rand.Int63n(int64(30*time.Minute)))
 	log.Infof("waiting for %s...", sleep)
 	time.Sleep(sleep)
 	for {
@@ -298,11 +298,11 @@ func (c *Client) Background(wg *sync.WaitGroup) {
 		}
 
 		if len(peers) > 25 {
-			sleep = 2*time.Hour + time.Duration(rand.Intn(int(4*time.Hour)))
+			sleep = 2*time.Hour + time.Duration(rand.Int63n(int64(4*time.Hour)))
 		} else if len(peers) > 10 {
-			sleep = time.Hour + time.Duration(rand.Intn(int(2*time.Hour)))
+			sleep = time.Hour + time.Duration(rand.Int63n(int64(2*time.Hour)))
 		} else {
-			sleep = 30*time.Minute + time.Duration(rand.Intn(int(time.Hour)))
+			sleep = 30*time.Minute + time.Duration(rand.Int63n(int64(time.Hour)))
 		}
 		log.Infof("waiting for %s...", sleep)
 		time.Sleep(sleep)
